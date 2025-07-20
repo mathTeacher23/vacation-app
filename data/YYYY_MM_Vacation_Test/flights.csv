@@ -1,0 +1,3 @@
+"Type","FlightNumber","From","To","Seats","FlightCost"
+"Departure","UA12345","IAD 3:35 PM","MCO 6:00 PM","1A & 1B",0
+"Return","UA54321","MCO 5:00 PM","IAD 8:00 PM","2B & 2C",1320
