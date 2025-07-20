@@ -93,7 +93,7 @@ ui <- page_sidebar(
                       card(
                         class = "highlight-card",
                         dateInput("entry_date", "Date", value = Sys.Date()),
-                        selectizeInput("lodging", "Lodging", choices = NULL, multiple = TRUE),
+                        selectizeInput("lodging", "Lodging", choices = NULL, multiple = TRUE, options = list(create = TRUE)),
                         textInput("plans", "Plans"),
                         textInput("reservations", "Reservations"),
                         textAreaInput("journal", "Journal", height = "80px"),
