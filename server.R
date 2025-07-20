@@ -185,6 +185,15 @@ server <- function(input, output, session) {
     budget_trigger(budget_trigger() + 1)
     photo_trigger(photo_trigger() + 1)
     
+    # After saving entry and flight data
+    tryCatch({
+      source("utils/generate_vacation_summary.R")
+      folder_name <- basename(current_folder())
+      generate_vacation_report(folder_name)
+    }, error = function(e) {
+      message("⚠️ Could not regenerate markdown summary: ", e$message)
+    })
+    
     showNotification("✅ Entry saved!", type = "message")
   })
   
