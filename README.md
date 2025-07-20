@@ -38,6 +38,36 @@ Whether you're prepping for Disney or relaxing on the beach, this app gives stru
 - Photo folders match each day's date under `/photos/`.
 - A flight CSV stores your travel details.
 
+## 📸 Screenshots
+
+### 1. Vacation Selector  
+_Select your vacation folder to begin logging and planning._  
+![Vacation Selector](www/01_vacation_selector.jpg)
+
+---
+
+### 2. Flight Info  
+_View and manage your flight details for the trip._  
+![Flight Info](www/02_flight_info.jpg)
+
+---
+
+### 3. Daily Entry  
+_Log daily plans, lodging, reservations, and journal entries._  
+![Daily Entry](www/03_daily_entry.jpg)
+
+---
+
+### 4. Budget Summary  
+_Track your total spending with easy-to-read summaries._  
+![Budget Summary](www/04_budget_summary.jpg)
+
+---
+
+### 5. Photos  
+_Browse and view daily photos from your vacation._  
+![Photos](www/05_photos.jpg)
+
 ---
 
 ## 📂 Project Structure
