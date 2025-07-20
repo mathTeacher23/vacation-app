@@ -45,47 +45,10 @@ Whether you're prepping for Disney or relaxing on the beach, this app gives stru
 ```
 .
 ├── data
-│   └── YYYY_MM_Vacation_Test
-│       ├── 2025-07-20.csv
-│       ├── 2025-07-21.csv
-│       ├── 2025-07-22.csv
-│       ├── 2025-07-23.csv
-│       ├── 2025-07-24.csv
-│       ├── 2025-07-25.csv
-│       ├── 2025-07-26.csv
-│       └── flights.csv
 ├── global.R
 ├── models
 ├── photos
-│   └── YYYY_MM_Vacation_Test
-│       ├── 2025-07-20
-│       │   ├── IMG_1000.jpeg
-│       │   ├── IMG_2000.jpeg
-│       │   └── IMG_3000.jpeg
-│       ├── 2025-07-21
-│       │   ├── IMG_1001.jpeg
-│       │   ├── IMG_2001.jpeg
-│       │   └── IMG_3001.jpeg
-│       ├── 2025-07-22
-│       │   ├── IMG_1002.jpeg
-│       │   ├── IMG_2002.jpeg
-│       │   └── IMG_3002.jpeg
-│       ├── 2025-07-23
-│       │   ├── IMG_1003.jpeg
-│       │   ├── IMG_2003.jpeg
-│       │   └── IMG_3003.jpeg
-│       ├── 2025-07-24
-│       │   ├── IMG_1004.jpeg
-│       │   ├── IMG_2004.jpeg
-│       │   └── IMG_3004.jpeg
-│       ├── 2025-07-25
-│       │   ├── IMG_1005.jpeg
-│       │   ├── IMG_2005.jpeg
-│       │   └── IMG_3005.jpeg
-│       └── 2025-07-26
-│           ├── IMG_1006.jpeg
-│           ├── IMG_2006.jpeg
-│           └── IMG_3006.jpeg
+├── README.md
 ├── server.R
 ├── ui.R
 ├── utils
@@ -93,6 +56,7 @@ Whether you're prepping for Disney or relaxing on the beach, this app gives stru
 │   ├── generate_dummy_data.R
 │   └── lodging_choices.csv
 └── www
+    └── sample_image.JPG
     └── sample_image.JPG
 ```
 
@@ -124,10 +88,13 @@ shiny::runApp()
 
 The app includes a utility script to auto-generate a full sample vacation for testing and demo purposes.
 
-To run it, simply source:
+To run it, simply update `run_test` to `TRUE`:
 
 ```r
-source("utils/generate_dummy_data.R")
+run_test = TRUE
+if (run_test == TRUE) {
+  source("utils/generate_dummy_data.R")
+}
 ```
 
 ### ✨ What it Generates:
@@ -149,7 +116,7 @@ source("utils/generate_dummy_data.R")
 - **Photos** folder with:
   - 3 photos per day, named `IMG_XXXX.jpeg`
   - Copied from a sample placeholder image in `/www/sample_image.JPG`
-  - Organized in `/photos/YYYY_MM_Vacation_Test/<date>/`
+  - Organized in `/photos/<VACATION FOLDER>/<date>/`
 
 ### 📌 Dependencies
 
