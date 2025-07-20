@@ -70,6 +70,12 @@ _Browse and view daily photos from your vacation._
 
 ---
 
+### 6. Vacation Summmary
+_Automatically create a vacation summary that is updated each time you make updates to your vacation._
+![Vacation Summary](www/06_vacation_summary.jpg)
+
+---
+
 ## 📂 Project Structure
 
 ```
