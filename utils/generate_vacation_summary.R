@@ -5,12 +5,14 @@ library(stringr)
 generate_vacation_report <- function(vacation_folder_name) {
   base_path <- file.path("data", vacation_folder_name)
   photo_path <- file.path("photos", vacation_folder_name)
+  summary_dir <- file.path(base_path, "summary")
+  
+  if (!dir.exists(summary_dir)) dir.create(summary_dir, recursive = TRUE)
+  
   entry_files <- list.files(base_path, pattern = "^\\d{4}-\\d{2}-\\d{2}\\.csv$", full.names = TRUE)
   entry_files <- sort(entry_files)
   
-  if (length(entry_files) == 0) {
-    stop("No entries found.")
-  }
+  if (length(entry_files) == 0) stop("No entries found.")
   
   # Load flight data
   flight_file <- file.path(base_path, "flights.csv")
@@ -23,11 +25,7 @@ generate_vacation_report <- function(vacation_folder_name) {
   total_spent <- sum(entries$TotalSpent, na.rm = TRUE)
   flight_cost <- if (!is.null(flights)) sum(flights$FlightCost, na.rm = TRUE) else 0
   
-  # Create summary folder
-  summary_dir <- file.path(base_path, "summary")
-  if (!dir.exists(summary_dir)) dir.create(summary_dir, recursive = TRUE)
-  
-  # Markdown output path
+  # Markdown output
   md_path <- file.path(summary_dir, "vacation_summary.md")
   con <- file(md_path, "w")
   
@@ -78,5 +76,7 @@ generate_vacation_report <- function(vacation_folder_name) {
   }
   
   close(con)
-  cat("✅ Markdown report written to:", md_path, "\n")
+  
+  cat("✅ Summary saved to:\n")
+  cat("  - Markdown: ", md_path, "\n")
 }

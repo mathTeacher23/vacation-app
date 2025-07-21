@@ -164,7 +164,6 @@ server <- function(input, output, session) {
       write.csv(data.frame(Lodging = lodging_choices), lodging_list_path, row.names = FALSE)
     }
     
-    
     flights <- data.frame(
       Type         = c("Departure", "Return"),
       FlightNumber = c(input$dep_flight_number, input$ret_flight_number),
@@ -185,7 +184,6 @@ server <- function(input, output, session) {
     budget_trigger(budget_trigger() + 1)
     photo_trigger(photo_trigger() + 1)
     
-    # After saving entry and flight data
     tryCatch({
       source("utils/generate_vacation_summary.R")
       folder_name <- basename(current_folder())
