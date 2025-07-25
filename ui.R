@@ -68,25 +68,19 @@ ui <- page_sidebar(
                           )
                       ),
                       
-                      layout_column_wrap(
-                        width = 1,
-                        card(
-                          class = "highlight-card",
-                          title = "🛫 Departure Flight",
-                          textInput("dep_flight_number", "Flight Number", placeholder = "e.g. UA 12345"),
-                          textInput("dep_from", "From", placeholder = "e.g. IAD 3:35 PM"),
-                          textInput("dep_to", "To", placeholder = "e.g. MCO 6:00 PM"),
-                          textInput("dep_seats", "Seats", placeholder = "e.g. 1A & 1B")
-                        ),
-                        card(
-                          class = "highlight-card",
-                          title = "🛬 Return Flight",
-                          textInput("ret_flight_number", "Flight Number", placeholder = "e.g. MCO 45678"),
-                          textInput("ret_from", "From", placeholder = "e.g. MCO 5:00 PM"),
-                          textInput("ret_to", "To", placeholder = "e.g. IAD 8:00 PM"),
-                          textInput("ret_seats", "Seats", placeholder = "e.g. 2B & 2C")
+                      card(
+                        class = "highlight-card",
+                        title = "🛩️ All Flights",
+                        
+                        # Dynamic flight UI placeholder
+                        uiOutput("flight_inputs"),
+                        
+                        # Add Flight Button
+                        div(style = "margin-top: 10px;",
+                            actionBttn("add_flight", "➕ Add Another Flight", style = "material-flat", color = "primary")
                         )
                       )
+                      
       ),
       accordion_panel("️💲Additional Costs",
                       card(

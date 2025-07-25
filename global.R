@@ -13,7 +13,7 @@ library(stringr)
 library(readr)
 
 #run_test <- FALSE  # Toggle this to TRUE to generate dummy data, FALSE to clean it up
-run_test <- TRUE
+run_test <- FALSE
 dummy_folder_name <- "YYYY_MM_Vacation_Test"
 dummy_data_path <- file.path("data", dummy_folder_name)
 dummy_photos_path <- file.path("photos", dummy_folder_name)
