@@ -55,7 +55,9 @@ generate_vacation_report <- function(vacation_folder_name) {
     writeLines("## ✈️ Flights", con)
     for (i in seq_len(nrow(flights))) {
       f <- flights[i, ]
-      writeLines(paste0("- **", f$Type, "**: ", f$FlightNumber, " from ", f$From, " to ", f$To,
+      # Check if Date column exists (for backward compatibility)
+      date_info <- if ("Date" %in% names(f) && !is.na(f$Date)) paste0("**", f$Date, "** - ") else ""
+      writeLines(paste0("- ", date_info, "**", f$Type, "**: ", f$FlightNumber, " from ", f$From, " to ", f$To,
                         " | Seats: ", f$Seats, " | Cost: $", f$FlightCost), con)
     }
     writeLines("", con)

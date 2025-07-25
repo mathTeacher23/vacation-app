@@ -102,8 +102,12 @@ for (d in days) {
   }
 }
 
-# Create flights.csv
+# Create flights.csv with dates
+departure_date <- start_date  # First day of vacation
+return_date <- start_date + 6  # Last day of vacation (7th day)
+
 flights_df <- data.frame(
+  Date = c(as.character(departure_date), as.character(return_date)),
   Type = c("Departure", "Return"),
   FlightNumber = c("UA12345", "UA54321"),
   From = c("IAD 3:35 PM", "MCO 5:00 PM"),

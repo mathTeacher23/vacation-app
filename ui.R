@@ -58,9 +58,9 @@ ui <- page_sidebar(
                       )
       ),
       accordion_panel("✈️ Flight Info",
-                      div(style = "margin-bottom: 15px;",
-                          actionBttn("add_flight", "➕ Add Flight", style = "fill", color = "primary", size = "sm"),
-                          actionBttn("clear_flights", "🗑️ Clear All", style = "fill", color = "danger", size = "sm")
+                      div(style = "width: 400px; margin-bottom: 15px;",
+                          actionBttn("add_flight", "➕ Add Flight", style = "fill", color = "primary", size = "md"),
+                          actionBttn("clear_flights", "🗑️ Clear All", style = "fill", color = "danger", size = "md")
                       ),
                       uiOutput("flight_inputs")
       ),

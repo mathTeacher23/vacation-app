@@ -24,6 +24,7 @@ server <- function(input, output, session) {
         # Only use flight_inputs if input values don't exist yet (UI not rendered)
         # This prevents using stale data from previously deleted flights
         data.frame(
+          Date = if (!is.null(input[[paste0("date_", i)]])) as.character(input[[paste0("date_", i)]]) else flight_inputs[[paste0("date_", i)]] %||% as.character(Sys.Date()),
           Type = if (!is.null(input[[paste0("type_", i)]])) input[[paste0("type_", i)]] else flight_inputs[[paste0("type_", i)]] %||% "Departure",
           FlightNumber = if (!is.null(input[[paste0("flight_num_", i)]])) input[[paste0("flight_num_", i)]] else flight_inputs[[paste0("flight_num_", i)]] %||% "",
           From = if (!is.null(input[[paste0("from_", i)]])) input[[paste0("from_", i)]] else flight_inputs[[paste0("from_", i)]] %||% "",
@@ -156,6 +157,7 @@ server <- function(input, output, session) {
         
         # Populate flight inputs with existing data
         for (i in seq_len(nrow(flights))) {
+          flight_inputs[[paste0("date_", i)]] <- flights$Date[i] %||% as.character(Sys.Date())
           flight_inputs[[paste0("flight_num_", i)]] <- flights$FlightNumber[i]
           flight_inputs[[paste0("from_", i)]] <- flights$From[i]
           flight_inputs[[paste0("to_", i)]] <- flights$To[i]
@@ -215,7 +217,8 @@ server <- function(input, output, session) {
             actionButton(paste0("delete_", i), "🗑️ Delete", class = "btn-warning btn-sm", 
                         style = "padding: 2px 8px; font-size: 12px; background-color: #ff4d4d; color: white; border-color: #ff4d4d;")
         ),
-        
+        dateInput(paste0("date_", i), "Flight Date",
+                   value = flight_inputs[[paste0("date_", i)]] %||% Sys.Date()),
         layout_column_wrap(
           width = 1/2,
           textInput(paste0("flight_num_", i), "Flight Number",
@@ -262,6 +265,9 @@ server <- function(input, output, session) {
     
     # FIRST: Preserve current input values before UI re-renders
     for (i in ids) {
+      if (!is.null(input[[paste0("date_", i)]])) {
+        flight_inputs[[paste0("date_", i)]] <- as.character(input[[paste0("date_", i)]])
+      }
       if (!is.null(input[[paste0("type_", i)]])) {
         flight_inputs[[paste0("type_", i)]] <- input[[paste0("type_", i)]]
       }
@@ -287,6 +293,7 @@ server <- function(input, output, session) {
     flight_ids(c(ids, new_id))
     
     # Initialize default values for the new flight
+    flight_inputs[[paste0("date_", new_id)]] <- as.character(Sys.Date())
     flight_inputs[[paste0("type_", new_id)]] <- "Departure"
     flight_inputs[[paste0("flight_num_", new_id)]] <- ""
     flight_inputs[[paste0("from_", new_id)]] <- ""
@@ -300,7 +307,7 @@ server <- function(input, output, session) {
     flight_ids(c())
     # Clear all flight inputs
     flight_keys <- names(reactiveValuesToList(flight_inputs))
-    flight_keys <- flight_keys[grepl("^(flight_num_|from_|to_|seats_|cost_|type_)", flight_keys)]
+    flight_keys <- flight_keys[grepl("^(flight_num_|from_|to_|seats_|cost_|type_|date_)", flight_keys)]
     for (key in flight_keys) {
       flight_inputs[[key]] <- NULL
     }
@@ -322,6 +329,9 @@ server <- function(input, output, session) {
         # FIRST: Preserve current input values from all existing flights
         current_ids <- flight_ids()
         for (id in current_ids) {
+          if (!is.null(input[[paste0("date_", id)]])) {
+            flight_inputs[[paste0("date_", id)]] <- as.character(input[[paste0("date_", id)]])
+          }
           if (!is.null(input[[paste0("type_", id)]])) {
             flight_inputs[[paste0("type_", id)]] <- input[[paste0("type_", id)]]
           }
@@ -347,6 +357,7 @@ server <- function(input, output, session) {
         flight_ids(remaining_ids)
         
         # THIRD: Only clean up reactive values for the deleted flight
+        flight_inputs[[paste0("date_", i)]] <- NULL
         flight_inputs[[paste0("flight_num_", i)]] <- NULL
         flight_inputs[[paste0("from_", i)]] <- NULL
         flight_inputs[[paste0("to_", i)]] <- NULL
@@ -392,6 +403,7 @@ server <- function(input, output, session) {
     if (length(ids) > 0) {
       flight_data <- lapply(ids, function(i) {
         data.frame(
+          Date = as.character(input[[paste0("date_", i)]] %||% Sys.Date()),
           Type = input[[paste0("type_", i)]] %||% "",
           FlightNumber = input[[paste0("flight_num_", i)]] %||% "",
           From = input[[paste0("from_", i)]] %||% "",
@@ -473,7 +485,7 @@ server <- function(input, output, session) {
       lodging_cost <- 0
     }
     
-    overall_total <- total_spent + flight_cost + ticket_cost + lodging_cost
+    overall_total <- round(total_spent + flight_cost + ticket_cost + lodging_cost, 2)
     
     summary_df <- data.frame(
       Category = c(
