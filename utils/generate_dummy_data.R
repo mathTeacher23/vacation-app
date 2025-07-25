@@ -122,6 +122,8 @@ additional_costs <- data.frame(
 )
 write.csv(additional_costs, file.path(data_dir, "costs.csv"), row.names = FALSE)
 
+source("utils/generate_vacation_summary.R")
+generate_vacation_report("YYYY_MM_Vacation_Test")
 cat("✅ Dummy vacation folder and photos created at:\n")
 cat(data_dir, "\n")
 cat(photos_dir, "\n")
