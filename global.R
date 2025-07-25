@@ -12,10 +12,33 @@ library(leaflet)
 library(stringr)
 library(readr)
 
-run_test = TRUE
-if (run_test == TRUE) {
+#run_test <- FALSE  # Toggle this to TRUE to generate dummy data, FALSE to clean it up
+run_test <- TRUE
+dummy_folder_name <- "YYYY_MM_Vacation_Test"
+dummy_data_path <- file.path("data", dummy_folder_name)
+dummy_photos_path <- file.path("photos", dummy_folder_name)
+
+if (run_test) {
+  message("⚙️ Generating dummy data...")
   source("utils/generate_dummy_data.R")
+} else {
+  message("🧹 Cleaning up previous dummy data...")
+  
+  if (dir.exists(dummy_data_path)) {
+    unlink(dummy_data_path, recursive = TRUE, force = TRUE)
+    message("🗑️ Removed dummy data folder: ", dummy_data_path)
+  } else {
+    message("✅ No dummy data folder to remove.")
+  }
+  
+  if (dir.exists(dummy_photos_path)) {
+    unlink(dummy_photos_path, recursive = TRUE, force = TRUE)
+    message("🗑️ Removed dummy photos folder: ", dummy_photos_path)
+  } else {
+    message("✅ No dummy photo folder to remove.")
+  }
 }
+
 # Ensure data directory exists
 if (!dir.exists("data")) dir.create("data")
 

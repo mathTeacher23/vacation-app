@@ -18,12 +18,19 @@ generate_vacation_report <- function(vacation_folder_name) {
   flight_file <- file.path(base_path, "flights.csv")
   flights <- if (file.exists(flight_file)) read_csv(flight_file, show_col_types = FALSE) else NULL
   
+  # Load additional cost data
+  cost_file <- file.path(base_path, "costs.csv")
+  costs <- if (file.exists(cost_file)) read_csv(cost_file, show_col_types = FALSE) else NULL
+  ticket_cost <- if (!is.null(costs) && "TicketCost" %in% names(costs)) costs$TicketCost[1] else 0
+  lodging_cost <- if (!is.null(costs) && "LodgingCost" %in% names(costs)) costs$LodgingCost[1] else 0
+  
   # Compile entry data
   entries <- bind_rows(lapply(entry_files, read_csv, show_col_types = FALSE)) %>%
     arrange(Date)
   
   total_spent <- sum(entries$TotalSpent, na.rm = TRUE)
   flight_cost <- if (!is.null(flights)) sum(flights$FlightCost, na.rm = TRUE) else 0
+  total_budget <- total_spent + flight_cost + ticket_cost + lodging_cost
   
   # Markdown output
   md_path <- file.path(summary_dir, "vacation_summary.md")
@@ -33,7 +40,15 @@ generate_vacation_report <- function(vacation_folder_name) {
   writeLines("", con)
   writeLines(paste0("**Trip Dates**: ", entries$Date[1], " to ", entries$Date[nrow(entries)]), con)
   writeLines(paste0("**Total Days**: ", nrow(entries)), con)
-  writeLines(paste0("**Total Spent**: $", round(total_spent + flight_cost, 2)), con)
+  writeLines(paste0("**Total Spent**: $", round(total_budget, 2)), con)
+  writeLines("", con)
+  
+  writeLines("### 💲 Budget Breakdown", con)
+  writeLines(paste0("- Daily Spending Total: $", round(total_spent, 2)), con)
+  writeLines(paste0("- Flight Cost: $", round(flight_cost, 2)), con)
+  writeLines(paste0("- Theme Park Tickets: $", round(ticket_cost, 2)), con)
+  writeLines(paste0("- Lodging Cost: $", round(lodging_cost, 2)), con)
+  writeLines(paste0("- **Overall Total**: $", round(total_budget, 2)), con)
   writeLines("", con)
   
   if (!is.null(flights)) {

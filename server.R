@@ -24,6 +24,12 @@ server <- function(input, output, session) {
                          server = TRUE)
   })
   
+  # observeEvent({
+  #   input$total_ticket_cost
+  #   input$total_lodging_cost
+  # }, {
+  #   budget_trigger(budget_trigger() + 1)
+  # })
   
   # --- When the date changes (load existing entry or clear fields) ---
   observeEvent(input$entry_date, {
@@ -89,6 +95,17 @@ server <- function(input, output, session) {
     journal_trigger(journal_trigger() + 1)
     flight_data_trigger(flight_data_trigger() + 1)
     budget_trigger(budget_trigger() + 1)
+    
+    # Load additional costs if available
+    cost_file <- file.path(current_folder(), "costs.csv")
+    if (file.exists(cost_file)) {
+      costs <- read.csv(cost_file)
+      updateNumericInput(session, "total_ticket_cost", value = costs$TicketCost[1])
+      updateNumericInput(session, "total_lodging_cost", value = costs$LodgingCost[1])
+    } else {
+      updateNumericInput(session, "total_ticket_cost", value = NULL)
+      updateNumericInput(session, "total_lodging_cost", value = NULL)
+    }
     
     # Load flight data into input fields if available
     flight_file <- file.path(current_folder(), "flights.csv")
@@ -175,6 +192,13 @@ server <- function(input, output, session) {
     )
     write.csv(flights, file.path(current_folder(), "flights.csv"), row.names = FALSE)
     
+    # Save additional costs to a file in the current vacation folder
+    additional_costs <- data.frame(
+      TicketCost = ifelse(is.null(input$total_ticket_cost), 0, input$total_ticket_cost),
+      LodgingCost = ifelse(is.null(input$total_lodging_cost), 0, input$total_lodging_cost)
+    )
+    write.csv(additional_costs, file.path(current_folder(), "costs.csv"), row.names = FALSE)
+    
     # Create corresponding photos folder
     photo_folder <- file.path("photos", input$vacation_folder, format(input$entry_date, "%Y-%m-%d"))
     if (!dir.exists(photo_folder)) dir.create(photo_folder, recursive = TRUE)
@@ -225,9 +249,34 @@ server <- function(input, output, session) {
     if (file.exists(flight_file))
       flight_cost <- sum(read.csv(flight_file)$FlightCost, na.rm = TRUE)
     
+    # Read saved additional costs
+    cost_file <- file.path(current_folder(), "costs.csv")
+    if (file.exists(cost_file)) {
+      costs <- read.csv(cost_file)
+      ticket_cost <- costs$TicketCost[1]
+      lodging_cost <- costs$LodgingCost[1]
+    } else {
+      ticket_cost <- 0
+      lodging_cost <- 0
+    }
+    
+    overall_total <- total_spent + flight_cost + ticket_cost + lodging_cost
+    
     summary_df <- data.frame(
-      Category = c("Total Daily Spending", "Total Flight Cost", "Overall Total"),
-      Amount   = c(total_spent, flight_cost, total_spent + flight_cost)
+      Category = c(
+        "Total Daily Spending",
+        "Total Flight Cost",
+        "Theme Park Tickets",
+        "Lodging",
+        "Overall Total"
+      ),
+      Amount = c(
+        total_spent,
+        flight_cost,
+        ticket_cost,
+        lodging_cost,
+        overall_total
+      )
     )
     datatable(summary_df, options = list(dom = 't', paging = FALSE), rownames = FALSE)
   })

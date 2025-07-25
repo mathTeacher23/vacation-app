@@ -115,6 +115,13 @@ flights_df <- data.frame(
 
 write.csv(flights_df, file.path(data_dir, "flights.csv"), row.names = FALSE)
 
+# Create costs.csv with additional budget values
+additional_costs <- data.frame(
+  TicketCost = round(runif(1, 400, 1200), 2),   # total for all theme park tickets
+  LodgingCost = round(runif(1, 900, 2400), 2)   # total for all lodging
+)
+write.csv(additional_costs, file.path(data_dir, "costs.csv"), row.names = FALSE)
+
 cat("✅ Dummy vacation folder and photos created at:\n")
 cat(data_dir, "\n")
 cat(photos_dir, "\n")

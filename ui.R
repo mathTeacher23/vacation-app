@@ -88,7 +88,26 @@ ui <- page_sidebar(
                         )
                       )
       ),
+      accordion_panel("️💲Additional Costs",
+                      card(
+                        class = "highlight-card",
+                        numericInputIcon(
+                          inputId = "total_ticket_cost",
+                          label = "Total Theme Park Tickets Cost",
+                          value = NULL,
+                          min = 0,
+                          icon = list(prefix = "$")
+                        ),
+                        numericInputIcon(
+                          inputId = "total_lodging_cost",
+                          label = "Total Lodging Cost",
+                          value = NULL,
+                          min = 0,
+                          icon = list(prefix = "$")
+                        )
+                      )
       
+    ),
       accordion_panel("🗓️ Daily Entry",
                       card(
                         class = "highlight-card",
