@@ -58,35 +58,11 @@ ui <- page_sidebar(
                       )
       ),
       accordion_panel("✈️ Flight Info",
-                      div(style = "padding: 0.25rem 0; margin-bottom: 10px;",
-                          numericInputIcon(
-                            inputId = "flight_cost",
-                            label = "Flight Cost",
-                            value = NULL,
-                            min = 0,
-                            icon = list(prefix = "$")
-                          )
+                      div(style = "margin-bottom: 15px;",
+                          actionBttn("add_flight", "➕ Add Flight", style = "fill", color = "primary", size = "sm"),
+                          actionBttn("clear_flights", "🗑️ Clear All", style = "fill", color = "danger", size = "sm")
                       ),
-                      
-                      layout_column_wrap(
-                        width = 1,
-                        card(
-                          class = "highlight-card",
-                          title = "🛫 Departure Flight",
-                          textInput("dep_flight_number", "Flight Number", placeholder = "e.g. UA 12345"),
-                          textInput("dep_from", "From", placeholder = "e.g. IAD 3:35 PM"),
-                          textInput("dep_to", "To", placeholder = "e.g. MCO 6:00 PM"),
-                          textInput("dep_seats", "Seats", placeholder = "e.g. 1A & 1B")
-                        ),
-                        card(
-                          class = "highlight-card",
-                          title = "🛬 Return Flight",
-                          textInput("ret_flight_number", "Flight Number", placeholder = "e.g. MCO 45678"),
-                          textInput("ret_from", "From", placeholder = "e.g. MCO 5:00 PM"),
-                          textInput("ret_to", "To", placeholder = "e.g. IAD 8:00 PM"),
-                          textInput("ret_seats", "Seats", placeholder = "e.g. 2B & 2C")
-                        )
-                      )
+                      uiOutput("flight_inputs")
       ),
       accordion_panel("️💲Additional Costs",
                       card(

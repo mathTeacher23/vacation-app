@@ -8,6 +8,45 @@ server <- function(input, output, session) {
   photo_trigger          <- reactiveVal(0)
   current_folder         <- reactiveVal(NULL)
   
+  # --- Dynamic flight management ---
+  flight_ids <- reactiveVal(c())
+  flight_inputs <- reactiveValues()
+  
+  # Safe null operator
+  `%||%` <- function(a, b) if (!is.null(a)) a else b
+  
+  # Helper function to save current flight data
+  save_current_flights <- function() {
+    req(current_folder())
+    ids <- flight_ids()
+    if (length(ids) > 0) {
+      flight_data <- lapply(ids, function(i) {
+        # Only use flight_inputs if input values don't exist yet (UI not rendered)
+        # This prevents using stale data from previously deleted flights
+        data.frame(
+          Type = if (!is.null(input[[paste0("type_", i)]])) input[[paste0("type_", i)]] else flight_inputs[[paste0("type_", i)]] %||% "Departure",
+          FlightNumber = if (!is.null(input[[paste0("flight_num_", i)]])) input[[paste0("flight_num_", i)]] else flight_inputs[[paste0("flight_num_", i)]] %||% "",
+          From = if (!is.null(input[[paste0("from_", i)]])) input[[paste0("from_", i)]] else flight_inputs[[paste0("from_", i)]] %||% "",
+          To = if (!is.null(input[[paste0("to_", i)]])) input[[paste0("to_", i)]] else flight_inputs[[paste0("to_", i)]] %||% "",
+          Seats = if (!is.null(input[[paste0("seats_", i)]])) input[[paste0("seats_", i)]] else flight_inputs[[paste0("seats_", i)]] %||% "",
+          FlightCost = if (!is.null(input[[paste0("cost_", i)]])) input[[paste0("cost_", i)]] else flight_inputs[[paste0("cost_", i)]] %||% 0,
+          stringsAsFactors = FALSE
+        )
+      })
+      flights <- do.call(rbind, flight_data)
+      write.csv(flights, file.path(current_folder(), "flights.csv"), row.names = FALSE)
+    } else {
+      # If no flights, remove existing file
+      flight_file <- file.path(current_folder(), "flights.csv")
+      if (file.exists(flight_file)) {
+        file.remove(flight_file)
+      }
+    }
+    # Trigger table updates
+    flight_data_trigger(flight_data_trigger() + 1)
+    budget_trigger(budget_trigger() + 1)
+  }
+  
   # --- Lodging choices + persistence ---
   lodging_list_path <- "utils/lodging_choices.csv"
   if (file.exists(lodging_list_path)) {
@@ -107,22 +146,30 @@ server <- function(input, output, session) {
       updateNumericInput(session, "total_lodging_cost", value = NULL)
     }
     
-    # Load flight data into input fields if available
+    # Load flight data and populate dynamic inputs
     flight_file <- file.path(current_folder(), "flights.csv")
     if (file.exists(flight_file)) {
       flights <- read.csv(flight_file, stringsAsFactors = FALSE)
-      if (nrow(flights) >= 2) {
-        updateTextInput(session, "dep_flight_number", value = flights$FlightNumber[1])
-        updateTextInput(session, "dep_from",          value = flights$From[1])
-        updateTextInput(session, "dep_to",            value = flights$To[1])
-        updateTextInput(session, "dep_seats",         value = flights$Seats[1])
+      if (nrow(flights) > 0) {
+        # Set flight IDs based on existing data
+        flight_ids(seq_len(nrow(flights)))
         
-        updateTextInput(session, "ret_flight_number", value = flights$FlightNumber[2])
-        updateTextInput(session, "ret_from",          value = flights$From[2])
-        updateTextInput(session, "ret_to",            value = flights$To[2])
-        updateTextInput(session, "ret_seats",         value = flights$Seats[2])
-        updateNumericInput(session, "flight_cost",    value = flights$FlightCost[2])
+        # Populate flight inputs with existing data
+        for (i in seq_len(nrow(flights))) {
+          flight_inputs[[paste0("flight_num_", i)]] <- flights$FlightNumber[i]
+          flight_inputs[[paste0("from_", i)]] <- flights$From[i]
+          flight_inputs[[paste0("to_", i)]] <- flights$To[i]
+          flight_inputs[[paste0("seats_", i)]] <- flights$Seats[i] %||% ""
+          flight_inputs[[paste0("cost_", i)]] <- flights$FlightCost[i] %||% 0
+          flight_inputs[[paste0("type_", i)]] <- flights$Type[i] %||% ""
+        }
+      } else {
+        # Initialize with empty flight if no data exists
+        flight_ids(c(1))
       }
+    } else {
+      # Initialize with one empty flight if no file exists
+      flight_ids(c(1))
     }
     
     # Find and load the first available journal entry
@@ -154,6 +201,165 @@ server <- function(input, output, session) {
     
   })
   
+  # --- Dynamic Flight UI Rendering ---
+  output$flight_inputs <- renderUI({
+    ids <- flight_ids()
+    if (length(ids) == 0) return(NULL)
+    
+    lapply(ids, function(i) {
+      card(
+        class = "highlight-card",
+        #style = "background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; margin-bottom: 10px;",
+        div(style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;",
+            h5(paste("Flight"), style = "margin: 0; color: #495057;"),
+            actionButton(paste0("delete_", i), "🗑️ Delete", class = "btn-warning btn-sm", 
+                        style = "padding: 2px 8px; font-size: 12px; background-color: #ff4d4d; color: white; border-color: #ff4d4d;")
+        ),
+        
+        layout_column_wrap(
+          width = 1/2,
+          textInput(paste0("flight_num_", i), "Flight Number",
+                    value = flight_inputs[[paste0("flight_num_", i)]] %||% "",
+                    placeholder = "e.g. UA 12345"),
+          selectInput(paste0("type_", i), "Flight Type",
+                     choices = c("Departure" = "Departure", "Return" = "Return", "Connecting" = "Connecting"),
+                     selected = flight_inputs[[paste0("type_", i)]] %||% "Departure")
+        ),
+        
+        layout_column_wrap(
+          width = 1/2,
+          textInput(paste0("from_", i), "From",
+                    value = flight_inputs[[paste0("from_", i)]] %||% "",
+                    placeholder = "e.g. IAD 3:35 PM"),
+          textInput(paste0("to_", i), "To",
+                    value = flight_inputs[[paste0("to_", i)]] %||% "",
+                    placeholder = "e.g. MCO 6:00 PM")
+        ),
+        
+        layout_column_wrap(
+          width = 1/2,
+          textInput(paste0("seats_", i), "Seats",
+                    value = flight_inputs[[paste0("seats_", i)]] %||% "",
+                    placeholder = "e.g. 1A & 1B"),
+          numericInputIcon(paste0("cost_", i), "Cost",
+                          value = flight_inputs[[paste0("cost_", i)]] %||% 0,
+                          min = 0, icon = list(prefix = "$"))
+        )
+      )
+    })
+  })
+  
+  # --- Flight Management Event Handlers ---
+  
+  # Removed real-time input observers to prevent typing interruption
+  # Flight data is now only saved when user clicks "Save Entry"
+  
+
+  
+  # Add Flight Button
+  observeEvent(input$add_flight, {
+    ids <- flight_ids()
+    
+    # FIRST: Preserve current input values before UI re-renders
+    for (i in ids) {
+      if (!is.null(input[[paste0("type_", i)]])) {
+        flight_inputs[[paste0("type_", i)]] <- input[[paste0("type_", i)]]
+      }
+      if (!is.null(input[[paste0("flight_num_", i)]])) {
+        flight_inputs[[paste0("flight_num_", i)]] <- input[[paste0("flight_num_", i)]]
+      }
+      if (!is.null(input[[paste0("from_", i)]])) {
+        flight_inputs[[paste0("from_", i)]] <- input[[paste0("from_", i)]]
+      }
+      if (!is.null(input[[paste0("to_", i)]])) {
+        flight_inputs[[paste0("to_", i)]] <- input[[paste0("to_", i)]]
+      }
+      if (!is.null(input[[paste0("seats_", i)]])) {
+        flight_inputs[[paste0("seats_", i)]] <- input[[paste0("seats_", i)]]
+      }
+      if (!is.null(input[[paste0("cost_", i)]])) {
+        flight_inputs[[paste0("cost_", i)]] <- input[[paste0("cost_", i)]]
+      }
+    }
+    
+    # THEN: Add the new flight
+    new_id <- ifelse(length(ids) == 0, 1, max(ids) + 1)
+    flight_ids(c(ids, new_id))
+    
+    # Initialize default values for the new flight
+    flight_inputs[[paste0("type_", new_id)]] <- "Departure"
+    flight_inputs[[paste0("flight_num_", new_id)]] <- ""
+    flight_inputs[[paste0("from_", new_id)]] <- ""
+    flight_inputs[[paste0("to_", new_id)]] <- ""
+    flight_inputs[[paste0("seats_", new_id)]] <- ""
+    flight_inputs[[paste0("cost_", new_id)]] <- 0
+  })
+  
+  # Clear All Flights Button
+  observeEvent(input$clear_flights, {
+    flight_ids(c())
+    # Clear all flight inputs
+    flight_keys <- names(reactiveValuesToList(flight_inputs))
+    flight_keys <- flight_keys[grepl("^(flight_num_|from_|to_|seats_|cost_|type_)", flight_keys)]
+    for (key in flight_keys) {
+      flight_inputs[[key]] <- NULL
+    }
+    # Immediately save empty flight data
+    req(current_folder())
+    flight_file <- file.path(current_folder(), "flights.csv")
+    if (file.exists(flight_file)) {
+      file.remove(flight_file)
+    }
+    flight_data_trigger(flight_data_trigger() + 1)
+    budget_trigger(budget_trigger() + 1)
+  })
+  
+  # Delete specific flight inputs
+  observe({
+    ids <- flight_ids()
+    lapply(ids, function(i) {
+      observeEvent(input[[paste0("delete_", i)]], {
+        # FIRST: Preserve current input values from all existing flights
+        current_ids <- flight_ids()
+        for (id in current_ids) {
+          if (!is.null(input[[paste0("type_", id)]])) {
+            flight_inputs[[paste0("type_", id)]] <- input[[paste0("type_", id)]]
+          }
+          if (!is.null(input[[paste0("flight_num_", id)]])) {
+            flight_inputs[[paste0("flight_num_", id)]] <- input[[paste0("flight_num_", id)]]
+          }
+          if (!is.null(input[[paste0("from_", id)]])) {
+            flight_inputs[[paste0("from_", id)]] <- input[[paste0("from_", id)]]
+          }
+          if (!is.null(input[[paste0("to_", id)]])) {
+            flight_inputs[[paste0("to_", id)]] <- input[[paste0("to_", id)]]
+          }
+          if (!is.null(input[[paste0("seats_", id)]])) {
+            flight_inputs[[paste0("seats_", id)]] <- input[[paste0("seats_", id)]]
+          }
+          if (!is.null(input[[paste0("cost_", id)]])) {
+            flight_inputs[[paste0("cost_", id)]] <- input[[paste0("cost_", id)]]
+          }
+        }
+        
+        # SECOND: Simply remove the specific flight ID from the list (no renumbering)
+        remaining_ids <- setdiff(current_ids, i)
+        flight_ids(remaining_ids)
+        
+        # THIRD: Only clean up reactive values for the deleted flight
+        flight_inputs[[paste0("flight_num_", i)]] <- NULL
+        flight_inputs[[paste0("from_", i)]] <- NULL
+        flight_inputs[[paste0("to_", i)]] <- NULL
+        flight_inputs[[paste0("seats_", i)]] <- NULL
+        flight_inputs[[paste0("cost_", i)]] <- NULL
+        flight_inputs[[paste0("type_", i)]] <- NULL
+      }, ignoreInit = TRUE)
+    })
+  })
+  
+  # Don't automatically update tables when flight_ids change
+  # Tables will update when user clicks "Save Entry" or when flights are deleted
+  
   # --- Save entry block ---
   observeEvent(input$save_entry, {
     req(current_folder(), input$entry_date)
@@ -181,16 +387,23 @@ server <- function(input, output, session) {
       write.csv(data.frame(Lodging = lodging_choices), lodging_list_path, row.names = FALSE)
     }
     
-    flights <- data.frame(
-      Type         = c("Departure", "Return"),
-      FlightNumber = c(input$dep_flight_number, input$ret_flight_number),
-      From         = c(input$dep_from, input$ret_from),
-      To           = c(input$dep_to, input$ret_to),
-      Seats        = c(input$dep_seats, input$ret_seats),
-      FlightCost   = c(0, input$flight_cost),
-      stringsAsFactors = FALSE
-    )
-    write.csv(flights, file.path(current_folder(), "flights.csv"), row.names = FALSE)
+    # Save dynamic flight data
+    ids <- flight_ids()
+    if (length(ids) > 0) {
+      flight_data <- lapply(ids, function(i) {
+        data.frame(
+          Type = input[[paste0("type_", i)]] %||% "",
+          FlightNumber = input[[paste0("flight_num_", i)]] %||% "",
+          From = input[[paste0("from_", i)]] %||% "",
+          To = input[[paste0("to_", i)]] %||% "",
+          Seats = input[[paste0("seats_", i)]] %||% "",
+          FlightCost = input[[paste0("cost_", i)]] %||% 0,
+          stringsAsFactors = FALSE
+        )
+      })
+      flights <- do.call(rbind, flight_data)
+      write.csv(flights, file.path(current_folder(), "flights.csv"), row.names = FALSE)
+    }
     
     # Save additional costs to a file in the current vacation folder
     additional_costs <- data.frame(
